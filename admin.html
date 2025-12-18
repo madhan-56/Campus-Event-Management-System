@@ -1,0 +1,127 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Admin — Campus Events</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="container">
+      <h1>Admin</h1>
+      <nav>
+        <button id="addEventBtn" class="btn">Add Event</button>
+        <button id="logoutBtn" class="btn">Logout</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container content">
+    <section style="max-width:720px"></section>
+    <h3>All events</h3>
+    <div id="events"></div>
+  </main>
+
+  <!-- Add Event modal -->
+  <div id="addModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-card card">
+      <button id="closeModal" class="close">✕</button>
+      <h2>Create event</h2>
+      <form id="addEventForm">
+        <input id="ev-name" placeholder="Event name" required />
+        <input id="ev-date" type="date" required />
+        <input id="ev-location" placeholder="Location" />
+        <textarea id="ev-desc" placeholder="Description"></textarea>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button type="button" id="cancelAdd" class="btn">Cancel</button>
+          <button type="submit" class="btn">Create</button>
+        </div>
+      </form>
+      <div id="addMsg" class="muted tiny"></div>
+    </div>
+  </div>
+
+  <script>
+    // logout: clear session and redirect to login
+    document.getElementById('logoutBtn')?.addEventListener('click', () => {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      location.href = 'index.html';
+    });
+
+    const API = location.origin + '/api';
+    const token = () => localStorage.getItem('token');
+
+    async function load() {
+      try {
+        const res = await fetch(API + '/events', { headers: { 'Authorization': 'Bearer ' + token() } });
+        if (!res.ok) return document.getElementById('events').textContent = 'Failed to load events';
+        const events = await res.json();
+        document.getElementById('events').innerHTML = events.map(e => `
+          <div class="card" style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+            <div>
+              <strong>${e.name}</strong>
+              <div class="muted">${e.date || ''} • ${e.location || ''}</div>
+            </div>
+            <div style="display:flex;gap:8px">
+              <a class="btn" href="admin-event.html?id=${e._id}">Participants</a>
+            </div>
+          </div>`).join('') || '<p>No events.</p>';
+      } catch (err) {
+        document.getElementById('events').textContent = 'Network error';
+      }
+    }
+    load();
+
+    // modal controls
+    const addBtn = document.getElementById('addEventBtn');
+    const modal = document.getElementById('addModal');
+    const closeModal = document.getElementById('closeModal');
+    const cancelAdd = document.getElementById('cancelAdd');
+    const addForm = document.getElementById('addEventForm');
+    const addMsg = document.getElementById('addMsg');
+
+    function showModal(show = true) {
+      modal.classList.toggle('hidden', !show);
+      modal.setAttribute('aria-hidden', !show);
+      // prevent background scrolling and interaction while modal open
+      document.body.classList.toggle('modal-open', show);
+      if (show) {
+        // focus first form control for accessibility
+        modal.querySelector('input, textarea, button')?.focus();
+      }
+    }
+
+    addBtn?.addEventListener('click', () => showModal(true));
+    closeModal?.addEventListener('click', () => showModal(false));
+    cancelAdd?.addEventListener('click', () => showModal(false));
+
+    addForm?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      addMsg.textContent = '';
+      const body = {
+        name: document.getElementById('ev-name').value.trim(),
+        date: document.getElementById('ev-date').value,
+        location: document.getElementById('ev-location').value.trim(),
+        description: document.getElementById('ev-desc').value.trim()
+      };
+      try {
+        const res = await fetch(API + '/events', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token()
+          },
+          body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        if (!res.ok) { addMsg.textContent = data.message || 'Create failed'; return; }
+        showModal(false);
+        load();
+      } catch (err) {
+        addMsg.textContent = 'Network error';
+      }
+    });
+  </script>
+</body>
+</html>

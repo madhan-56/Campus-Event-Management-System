@@ -1,0 +1,65 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Event</title><link rel="stylesheet" href="style.css"></head>
+<body>
+  <div class="container" id="root"></div>
+  <script>
+    const API = location.origin + '/api';
+    const params = new URLSearchParams(location.search);
+    const id = params.get('id');
+    const token = localStorage.getItem('token');
+    const me = JSON.parse(localStorage.getItem('user') || 'null');
+
+    async function load() {
+      const res = await fetch(API + '/events/' + id, { headers: token ? { 'Authorization': 'Bearer ' + token } : {} });
+      if (!res.ok) return document.getElementById('root').textContent = 'Event not found';
+      const e = await res.json();
+
+      let out = `<h2 class="event-title">${e.name}</h2><div class="muted">${e.date||''} • ${e.location||''}</div><p>${e.description||''}</p>`;
+      out += '<h3>Register</h3>';
+
+      const regKey = 'registered:' + id;
+      const saved = JSON.parse(localStorage.getItem(regKey) || 'null');
+      const myReg = saved ? e.participants.find(p => p.rollNumber === saved.rollNumber || p.name === saved.name) : null;
+
+      if (myReg) {
+        out += `<div class="card"><strong>Your registration</strong><div style="margin-top:8px">${myReg.name} • ${myReg.rollNumber} • ${myReg.phoneNumber}</div></div>`;
+      } else {
+        out += `
+          <form id="reg" class="form" style="max-width:520px">
+            <input id="name" placeholder="Name" required>
+            <input id="roll" placeholder="Roll number" required>
+            <input id="phone" placeholder="Phone" required>
+            <button>Register</button>
+          </form>
+        `;
+      }
+
+      if (me && me.role === 'admin') {
+        out += '<h4>Participants</h4>';
+        out += '<div id="parts">' + ((e.participants || []).map(p=>`<div class="card"><div><strong>${p.name}</strong> — ${p.rollNumber}</div><div class="muted">${p.phoneNumber}</div></div>`).join('')) + '</div>';
+      } else {
+        out += '<div class="muted tiny">Participants are visible to admin only.</div>';
+      }
+
+      document.getElementById('root').innerHTML = out;
+    }
+
+    document.addEventListener('submit', async (ev) => {
+      if (ev.target.id !== 'reg') return;
+      ev.preventDefault();
+      const body = { name: document.getElementById('name').value, rollNumber: document.getElementById('roll').value, phoneNumber: document.getElementById('phone').value };
+      if (!body.name || !body.rollNumber || !body.phoneNumber) return alert('Fill all fields');
+      const res = await fetch(API + '/events/' + id + '/register', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(body) });
+      if (res.ok) {
+        localStorage.setItem('registered:' + id, JSON.stringify({ name: body.name, rollNumber: body.rollNumber }));
+        location.reload();
+      } else {
+        alert((await res.json()).message || 'Error');
+      }
+    });
+
+    load();
+  </script>
+</body>
+</html>

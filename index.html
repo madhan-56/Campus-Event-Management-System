@@ -1,0 +1,33 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Campus Events — Login</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="minimal-login">
+    <form id="loginForm" autocomplete="on" class="card">
+      <div class="role-toggle" role="tablist" aria-label="Choose role">
+        <button type="button" id="roleAdmin" class="role active">Admin</button>
+        <button type="button" id="roleStudent" class="role">Student</button>
+        <div class="slider"></div>
+      </div>
+
+      <input id="username" name="username" placeholder="Username" required />
+      <input id="password" name="password" type="password" placeholder="Password" required />
+      <button id="submit" type="submit" class="primary">Sign in</button>
+
+      <div class="actions">
+        <a id="register" href="register.html">Register</a>
+      </div>
+
+      <div id="loginMsg" class="msg" aria-live="polite"></div>
+    </form>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>

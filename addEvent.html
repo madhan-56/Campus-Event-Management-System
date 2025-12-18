@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Add Event</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+  <h2>Add New Event</h2>
+  <form id="addEventForm">
+    <input type="text" id="name" placeholder="Event Name" required>
+    <input type="date" id="date" required>
+    <input type="text" id="location" placeholder="Location" required>
+    <textarea id="description" placeholder="Description" required></textarea>
+    <button type="submit">Add Event</button>
+  </form>
+  <p id="msg"></p>
+</div>
+
+<script>
+const addEventForm = document.getElementById('addEventForm');
+addEventForm.addEventListener('submit', async e=>{
+  e.preventDefault();
+  const data = {
+    name: document.getElementById('name').value,
+    date: document.getElementById('date').value,
+    location: document.getElementById('location').value,
+    description: document.getElementById('description').value
+  };
+
+  const res = await fetch('http://localhost:5000/api/events', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(data)
+  });
+
+  const msg = document.getElementById('msg');
+  const response = await res.json();
+  if(res.ok) msg.innerText='Event Added Successfully!';
+  else msg.innerText = response.error || 'Error adding event!';
+  addEventForm.reset();
+});
+</script>
+</body>
+</html>

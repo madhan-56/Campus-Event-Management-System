@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Register</title><link rel="stylesheet" href="style.css"></head>
+<body>
+  <main class="minimal-login">
+    <form id="registerForm" class="card" autocomplete="on">
+      <input id="regName" placeholder="Full name" required />
+      <input id="regEmail" type="email" placeholder="Email" required />
+      <input id="regUsername" placeholder="Username" required />
+      <input id="regPassword" type="password" placeholder="Password" required />
+      <input id="regConfirm" type="password" placeholder="Confirm password" required />
+      <button type="submit" class="primary">Create account</button>
+      <div id="regMsg" class="msg" aria-live="polite"></div>
+      <div class="actions"><a href="index.html">Back to login</a></div>
+    </form>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>

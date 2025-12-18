@@ -1,0 +1,33 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Dashboard — Campus Events</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="container"><h1>Dashboard</h1><nav><a href="index.html">Sign out</a></nav></div>
+  </header>
+  <main class="container content">
+    <h2>Upcoming Events</h2>
+    <div id="events"></div>
+  </main>
+  <script>
+    const API = location.origin + '/api';
+    async function load() {
+      const res = await fetch(API + '/events');
+      const events = await res.json();
+      const out = events.map(e => `
+        <div class="card">
+          <div class="card-head"><strong>${e.name}</strong><span class="muted">${e.date||''}</span></div>
+          <div>${e.location || ''}</div>
+          <div>${(e.description||'').slice(0,140)}</div>
+          <div><a href="event.html?id=${e._id}">Details / Register</a></div>
+        </div>`).join('');
+      document.getElementById('events').innerHTML = out || '<p>No events.</p>';
+    }
+    load();
+  </script>
+</body>
+</html>

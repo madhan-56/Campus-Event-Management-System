@@ -1,0 +1,117 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Manage Event — Admin</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="container">
+      <a href="admin.html">← Back</a>
+      <h1>Manage Event</h1>
+    </div>
+  </header>
+
+  <main class="container content">
+    <div id="event"></div>
+
+    <section>
+      <h3>Participants</h3>
+      <div id="participantsWrap">
+        <table class="participants-table" id="participantsTable" aria-live="polite">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Name</th>
+              <th>Roll No</th>
+              <th>Phone</th>
+              <th>Registered at</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="participantsBody">
+            <tr><td colspan="6" class="muted">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const API = location.origin + '/api';
+    const token = localStorage.getItem('token');
+    const user = JSON.parse(localStorage.getItem('user') || 'null');
+    const params = new URLSearchParams(location.search);
+    const id = params.get('id');
+
+    if (!user || user.role !== 'admin') location.href = 'dashboard.html';
+
+    function formatDate(d) { if (!d) return ''; return new Date(d).toLocaleString(); }
+
+    async function load() {
+      const res = await fetch(API + '/events/' + id, { headers: { 'Authorization': 'Bearer ' + token } });
+      if (!res.ok) return document.getElementById('event').textContent = 'Event not found';
+      const e = await res.json();
+
+      document.getElementById('event').innerHTML = `
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <h2 style="margin:0">${e.name}</h2>
+              <div class="muted">${e.date || ''} • ${e.location || ''}</div>
+            </div>
+            <div style="text-align:right">${e.participants?.length || 0} participant(s)</div>
+          </div>
+          <p style="margin-top:10px">${e.description || ''}</p>
+        </div>
+      `;
+
+      const parts = (e.participants || []).slice().sort((a,b) => {
+        const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return tb - ta;
+      });
+
+      const body = document.getElementById('participantsBody');
+      if (!parts.length) {
+        body.innerHTML = '<tr><td colspan="6" class="muted">No participants yet</td></tr>';
+        return;
+      }
+
+      body.innerHTML = parts.map((p, idx) => `
+        <tr data-id="${p._id}">
+          <td>${idx + 1}</td>
+          <td>${p.name || ''}</td>
+          <td>${p.rollNumber || ''}</td>
+          <td>${p.phoneNumber || ''}</td>
+          <td class="tiny muted">${formatDate(p.createdAt)}</td>
+          <td>
+            <button class="remove" data-pid="${p._id}">Remove</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    async function deleteParticipant(pid) {
+      const res = await fetch(`${API}/events/${id}/participant/${pid}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      return res.ok;
+    }
+
+    document.addEventListener('click', async (ev) => {
+      const t = ev.target;
+      if (!t.dataset.pid) return;
+      const pid = t.dataset.pid;
+      if (t.matches('.remove')) {
+        if (confirm('Remove participant?') && await deleteParticipant(pid)) load();
+      }
+    });
+
+    load();
+  </script>
+</body>
+</html>
